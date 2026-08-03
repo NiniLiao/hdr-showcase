@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { getService, getStats, listServices, submitContact } from './api/_lib/handlers'
+import { resolveLocale } from './api/_lib/types'
 
 function readJson(req: IncomingMessage): Promise<unknown> {
   return new Promise((resolve) => {
@@ -36,19 +37,24 @@ function devApi(): Plugin {
         const url = new URL(req.url ?? '/', 'http://localhost')
         if (!url.pathname.startsWith('/api/')) return next()
 
+        const locale = resolveLocale(
+          url.searchParams.get('lang') ?? undefined,
+          req.headers['accept-language'],
+        )
+
         if (url.pathname === '/api/stats' && req.method === 'GET') {
-          const { status, body } = getStats()
+          const { status, body } = getStats(locale)
           return send(res, status, body)
         }
 
         if (url.pathname === '/api/services' && req.method === 'GET') {
-          const { status, body } = listServices(url.searchParams.get('q') ?? undefined)
+          const { status, body } = listServices(url.searchParams.get('q') ?? undefined, locale)
           return send(res, status, body)
         }
 
         const match = url.pathname.match(/^\/api\/services\/([\w-]+)$/)
         if (match && req.method === 'GET') {
-          const { status, body } = getService(match[1])
+          const { status, body } = getService(match[1], locale)
           return send(res, status, body)
         }
 
@@ -73,7 +79,7 @@ export default defineConfig({
     cssCodeSplit: false,
     rollupOptions: {
       output: {
-        manualChunks: { vendor: ['vue', 'pinia'] },
+        manualChunks: { vendor: ['vue', 'pinia', 'vue-i18n'] },
       },
     },
   },

@@ -1,19 +1,23 @@
 import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
-import type { DisciplineId, Service, ServiceSummary, Stat } from '@/types'
+import { DEFAULT_LOCALE } from '@/types'
+import type { DisciplineId, Locale, Service, ServiceSummary, Stat } from '@/types'
 
 export type FilterId = DisciplineId | 'all'
 
-export const FILTERS: ReadonlyArray<{ id: FilterId; label: string }> = [
-  { id: 'all', label: 'All' },
-  { id: 'transportation', label: 'Transportation' },
-  { id: 'water', label: 'Water' },
-  { id: 'buildings', label: 'Buildings' },
-  { id: 'energy', label: 'Energy' },
+export const FILTER_IDS: readonly FilterId[] = [
+  'all',
+  'transportation',
+  'water',
+  'buildings',
+  'energy',
 ]
 
+export const DISCIPLINE_IDS = FILTER_IDS.filter((id): id is DisciplineId => id !== 'all')
+
 export const useServicesStore = defineStore('services', () => {
+  const locale = ref<Locale>(DEFAULT_LOCALE)
   const summaries = ref<ServiceSummary[]>([])
   const stats = ref<Stat[]>([])
   const detailCache = ref<Record<string, Service>>({})
@@ -34,22 +38,24 @@ export const useServicesStore = defineStore('services', () => {
   const flagships = computed(() =>
     summaries.value
       .map((summary) => {
-        const detail = detailCache.value[summary.slug]
-        const study = detail?.caseStudies[0]
+        const study = detailCache.value[summary.slug]?.caseStudies[0]
         return study ? { slug: summary.slug, code: summary.code, discipline: summary.name, study } : null
       })
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null),
   )
 
-  const openService = computed(() => (openSlug.value ? (detailCache.value[openSlug.value] ?? null) : null))
+  const openService = computed(() =>
+    openSlug.value ? (detailCache.value[openSlug.value] ?? null) : null,
+  )
 
-  async function load() {
+  async function load(next: Locale = locale.value) {
     if (listStatus.value === 'loading') return
+    locale.value = next
     listStatus.value = 'loading'
     error.value = null
 
     try {
-      const [serviceResponse, statResponse] = await Promise.all([api.services(), api.stats()])
+      const [serviceResponse, statResponse] = await Promise.all([api.services(next), api.stats(next)])
       summaries.value = serviceResponse.services
       stats.value = statResponse.stats
       listStatus.value = 'ready'
@@ -57,6 +63,28 @@ export const useServicesStore = defineStore('services', () => {
       error.value = cause instanceof Error ? cause.message : 'Something went wrong.'
       listStatus.value = 'error'
     }
+  }
+
+  /** Used by the projects strip, which needs one case study per discipline. */
+  async function loadAllDetails() {
+    await Promise.all(
+      summaries.value.map(async (summary) => {
+        if (detailCache.value[summary.slug]) return
+        try {
+          detailCache.value[summary.slug] = await api.service(summary.slug, locale.value)
+        } catch {
+          /* the strip simply renders fewer entries */
+        }
+      }),
+    )
+  }
+
+  /** Locale-scoped content lives in the cache, so switching language empties it. */
+  async function switchLocale(next: Locale) {
+    if (next === locale.value && listStatus.value === 'ready') return
+    detailCache.value = {}
+    await load(next)
+    await loadAllDetails()
   }
 
   function setFilter(filter: FilterId) {
@@ -73,7 +101,7 @@ export const useServicesStore = defineStore('services', () => {
 
     detailStatus.value = 'loading'
     try {
-      detailCache.value[slug] = await api.service(slug)
+      detailCache.value[slug] = await api.service(slug, locale.value)
       detailStatus.value = 'ready'
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : 'Something went wrong.'
@@ -86,30 +114,17 @@ export const useServicesStore = defineStore('services', () => {
     detailStatus.value = 'idle'
   }
 
-  /** Used by the projects strip, which needs one case study per discipline. */
-  async function loadAllDetails() {
-    await Promise.all(
-      summaries.value.map(async (summary) => {
-        if (detailCache.value[summary.slug]) return
-        try {
-          detailCache.value[summary.slug] = await api.service(summary.slug)
-        } catch {
-          /* the strip simply renders fewer entries */
-        }
-      }),
-    )
-  }
-
   /** Warm the cache on hover or touchstart so the drawer opens without a spinner. */
   function prefetch(slug: string) {
     if (detailCache.value[slug]) return
     api
-      .service(slug)
+      .service(slug, locale.value)
       .then((service) => (detailCache.value[slug] = service))
       .catch(() => undefined)
   }
 
   return {
+    locale,
     summaries,
     stats,
     activeFilter,
@@ -122,6 +137,7 @@ export const useServicesStore = defineStore('services', () => {
     openService,
     load,
     loadAllDetails,
+    switchLocale,
     setFilter,
     open,
     close,

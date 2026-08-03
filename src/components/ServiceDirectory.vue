@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import ServiceCard from './ServiceCard.vue'
 import ServiceFilter from './ServiceFilter.vue'
 import { useServicesStore, type FilterId } from '@/stores/services'
 
+const { t } = useI18n()
 const store = useServicesStore()
 const { summaries, visible, activeFilter, listStatus, error } = storeToRefs(store)
 
@@ -23,18 +25,18 @@ function onFilter(filter: FilterId) {
   <section id="services" class="directory">
     <div class="shell">
       <header class="directory__head">
-        <p class="eyebrow">Service directory</p>
-        <h2 class="directory__title">Four disciplines, one delivery team</h2>
-        <p class="directory__lead">
-          Filter by discipline, then open a service for specifications and the projects behind them.
-        </p>
+        <p class="eyebrow">{{ t('directory.eyebrow') }}</p>
+        <h2 class="directory__title">{{ t('directory.title') }}</h2>
+        <p class="directory__lead">{{ t('directory.lead') }}</p>
       </header>
 
       <ServiceFilter :active="activeFilter" :counts="counts" @change="onFilter" />
 
       <p v-if="listStatus === 'error'" class="notice notice--error" role="alert">
         {{ error }}
-        <button class="notice__retry" type="button" @click="store.load()">Try again</button>
+        <button class="notice__retry" type="button" @click="store.load()">
+          {{ t('directory.retry') }}
+        </button>
       </p>
 
       <ul v-else-if="listStatus === 'loading' || listStatus === 'idle'" class="grid" aria-hidden="true">

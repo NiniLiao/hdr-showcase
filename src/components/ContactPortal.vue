@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { api } from '@/api/client'
-import { FILTERS } from '@/stores/services'
-import type { ContactPayload, ContactReceipt, DisciplineId } from '@/types'
+import { DISCIPLINE_IDS } from '@/stores/services'
+import type { ContactPayload, ContactReceipt, Locale } from '@/types'
+
+const { t, locale } = useI18n()
 
 const form = reactive<ContactPayload>({
   name: '',
@@ -16,17 +19,12 @@ const status = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
 const errorMessage = ref('')
 const receipt = ref<ContactReceipt | null>(null)
 
-const disciplines = FILTERS.filter((filter) => filter.id !== 'all') as ReadonlyArray<{
-  id: DisciplineId
-  label: string
-}>
-
 async function send() {
   status.value = 'sending'
   errorMessage.value = ''
 
   try {
-    receipt.value = await api.contact({ ...form })
+    receipt.value = await api.contact({ ...form, locale: locale.value as Locale })
     status.value = 'sent'
   } catch (cause) {
     errorMessage.value = cause instanceof Error ? cause.message : 'Something went wrong.'
@@ -45,40 +43,35 @@ function reset() {
   <section id="contact" class="contact">
     <div class="shell contact__inner">
       <div class="contact__intro">
-        <p class="eyebrow contact__eyebrow">Contact portal</p>
-        <h2 class="contact__title">Start a project with us</h2>
-        <p class="contact__lead">
-          Tell us what you are trying to build. We route the enquiry to the office that has done it
-          before and reply within two working days.
-        </p>
+        <p class="eyebrow contact__eyebrow">{{ t('contact.eyebrow') }}</p>
+        <h2 class="contact__title">{{ t('contact.title') }}</h2>
+        <p class="contact__lead">{{ t('contact.lead') }}</p>
 
         <dl class="offices">
-          <div><dt>Americas</dt><dd class="mono">+1 402 399 1000</dd></div>
-          <div><dt>Asia Pacific</dt><dd class="mono">+61 2 8081 4600</dd></div>
-          <div><dt>Europe</dt><dd class="mono">+44 20 7451 3200</dd></div>
+          <div><dt>{{ t('contact.americas') }}</dt><dd class="mono">+1 402 399 1000</dd></div>
+          <div><dt>{{ t('contact.apac') }}</dt><dd class="mono">+61 2 8081 4600</dd></div>
+          <div><dt>{{ t('contact.europe') }}</dt><dd class="mono">+44 20 7451 3200</dd></div>
         </dl>
       </div>
 
       <div class="card">
         <div v-if="status === 'sent' && receipt" class="receipt">
-          <p class="receipt__badge mono">Received</p>
+          <p class="receipt__badge mono">{{ t('contact.received') }}</p>
           <p class="receipt__reference mono">{{ receipt.reference }}</p>
           <p class="receipt__copy">
-            Routed to {{ receipt.office }}. Someone will reply by
-            <span class="mono">{{ receipt.respondBy }}</span
-            >.
+            {{ t('contact.routed', { office: receipt.office, date: receipt.respondBy }) }}
           </p>
-          <button class="ghost" type="button" @click="reset">Send another enquiry</button>
+          <button class="ghost" type="button" @click="reset">{{ t('contact.another') }}</button>
         </div>
 
         <form v-else class="form" novalidate @submit.prevent="send">
           <div class="field">
-            <label for="name">Name</label>
+            <label for="name">{{ t('contact.name') }}</label>
             <input id="name" v-model="form.name" type="text" autocomplete="name" required />
           </div>
 
           <div class="field">
-            <label for="email">Email</label>
+            <label for="email">{{ t('contact.email') }}</label>
             <input
               id="email"
               v-model="form.email"
@@ -90,29 +83,29 @@ function reset() {
           </div>
 
           <div class="field">
-            <label for="organisation">Organisation</label>
+            <label for="organisation">{{ t('contact.organisation') }}</label>
             <input id="organisation" v-model="form.organisation" type="text" autocomplete="organization" />
           </div>
 
           <div class="field">
-            <label for="discipline">Discipline</label>
+            <label for="discipline">{{ t('contact.discipline') }}</label>
             <select id="discipline" v-model="form.discipline">
-              <option value="general">General enquiry</option>
-              <option v-for="item in disciplines" :key="item.id" :value="item.id">
-                {{ item.label }}
+              <option value="general">{{ t('contact.general') }}</option>
+              <option v-for="id in DISCIPLINE_IDS" :key="id" :value="id">
+                {{ t(`directory.filters.${id}`) }}
               </option>
             </select>
           </div>
 
           <div class="field field--wide">
-            <label for="message">What are you building?</label>
+            <label for="message">{{ t('contact.message') }}</label>
             <textarea id="message" v-model="form.message" rows="4" required></textarea>
           </div>
 
           <p v-if="status === 'error'" class="error" role="alert">{{ errorMessage }}</p>
 
           <button class="submit" type="submit" :disabled="status === 'sending'">
-            {{ status === 'sending' ? 'Sending…' : 'Send enquiry' }}
+            {{ status === 'sending' ? t('contact.sending') : t('contact.submit') }}
           </button>
         </form>
       </div>

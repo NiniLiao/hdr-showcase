@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useServicesStore } from '@/stores/services'
 import { themeVars } from '@/utils/discipline'
 
+const { t } = useI18n()
 const store = useServicesStore()
 const { flagships } = storeToRefs(store)
 </script>
@@ -11,8 +13,8 @@ const { flagships } = storeToRefs(store)
   <section id="projects" class="projects">
     <div class="shell">
       <header class="projects__head">
-        <p class="eyebrow">Selected projects</p>
-        <h2 class="projects__title">One flagship from each discipline</h2>
+        <p class="eyebrow">{{ t('projects.eyebrow') }}</p>
+        <h2 class="projects__title">{{ t('projects.title') }}</h2>
       </header>
 
       <ol class="list">
@@ -28,7 +30,9 @@ const { flagships } = storeToRefs(store)
           <p class="row__value mono">{{ entry.study.value }}</p>
 
           <button class="row__open" type="button" @click="store.open(entry.slug)">
-            <span class="visually-hidden">Open {{ entry.discipline }}</span>
+            <span class="visually-hidden">
+              {{ t('directory.open', { name: entry.discipline }) }}
+            </span>
             <span aria-hidden="true">→</span>
           </button>
         </li>

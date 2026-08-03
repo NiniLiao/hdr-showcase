@@ -1,4 +1,4 @@
-import type { ContactPayload, ContactReceipt, Service, ServiceSummary, Stat } from '@/types'
+import type { ContactPayload, ContactReceipt, Locale, Service, ServiceSummary, Stat } from '@/types'
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -18,9 +18,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  services: () => request<{ services: ServiceSummary[] }>('/api/services'),
-  service: (slug: string) => request<Service>(`/api/services/${slug}`),
-  stats: () => request<{ stats: Stat[] }>('/api/stats'),
+  services: (locale: Locale) =>
+    request<{ locale: Locale; services: ServiceSummary[] }>(`/api/services?lang=${locale}`),
+  service: (slug: string, locale: Locale) => request<Service>(`/api/services/${slug}?lang=${locale}`),
+  stats: (locale: Locale) => request<{ stats: Stat[] }>(`/api/stats?lang=${locale}`),
   contact: (payload: ContactPayload) =>
     request<ContactReceipt>('/api/contact', {
       method: 'POST',

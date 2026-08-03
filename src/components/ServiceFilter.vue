@@ -1,23 +1,26 @@
 <script setup lang="ts">
-import { FILTERS, type FilterId } from '@/stores/services'
+import { useI18n } from 'vue-i18n'
+import { FILTER_IDS, type FilterId } from '@/stores/services'
 
 defineProps<{ active: FilterId; counts: Record<string, number> }>()
+
+const { t } = useI18n()
 const emit = defineEmits<{ change: [FilterId] }>()
 </script>
 
 <template>
-  <div class="filter" role="group" aria-label="Filter services by discipline">
+  <div class="filter" role="group" :aria-label="t('directory.filterLabel')">
     <ul class="filter__track">
-      <li v-for="filter in FILTERS" :key="filter.id">
+      <li v-for="id in FILTER_IDS" :key="id">
         <button
           class="chip"
           type="button"
-          :class="{ 'is-active': active === filter.id }"
-          :aria-pressed="active === filter.id"
-          @click="emit('change', filter.id)"
+          :class="{ 'is-active': active === id }"
+          :aria-pressed="active === id"
+          @click="emit('change', id)"
         >
-          {{ filter.label }}
-          <span v-if="counts[filter.id]" class="chip__count mono">{{ counts[filter.id] }}</span>
+          {{ t(`directory.filters.${id}`) }}
+          <span v-if="counts[id]" class="chip__count mono">{{ counts[id] }}</span>
         </button>
       </li>
     </ul>

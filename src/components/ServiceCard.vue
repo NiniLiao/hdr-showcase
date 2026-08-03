@@ -1,10 +1,12 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import { themeVars } from '@/utils/discipline'
 import type { ServiceSummary } from '@/types'
 
 const props = defineProps<{ service: ServiceSummary }>()
 const emit = defineEmits<{ open: [string]; prefetch: [string] }>()
 
+const { t } = useI18n()
 const style = themeVars(props.service.slug)
 </script>
 
@@ -13,7 +15,7 @@ const style = themeVars(props.service.slug)
     class="card"
     type="button"
     :style="style"
-    :aria-label="`Open ${service.name}`"
+    :aria-label="t('directory.open', { name: service.name })"
     @click="emit('open', service.slug)"
     @mouseenter="emit('prefetch', service.slug)"
     @focus="emit('prefetch', service.slug)"
@@ -27,7 +29,7 @@ const style = themeVars(props.service.slug)
     </span>
 
     <span class="card__foot">
-      <span class="card__cases mono">{{ service.caseCount }} case studies</span>
+      <span class="card__cases mono">{{ t('directory.cases', { count: service.caseCount }) }}</span>
       <span class="card__arrow" aria-hidden="true">→</span>
     </span>
   </button>

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useI18n } from 'vue-i18n'
 import { useServicesStore } from '@/stores/services'
 import { useMediaQuery } from '@/composables/useMediaQuery'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { themeVars } from '@/utils/discipline'
 
+const { t } = useI18n()
 const store = useServicesStore()
 const { openSlug, openService, detailStatus } = storeToRefs(store)
 
@@ -101,11 +103,11 @@ function onPointerUp() {
       </div>
 
       <button class="close" type="button" @click="dismiss">
-        <span class="visually-hidden">Close</span>
+        <span class="visually-hidden">{{ t('detail.close') }}</span>
         <span aria-hidden="true">✕</span>
       </button>
 
-      <div v-if="detailStatus === 'loading'" class="panel__loading mono">Loading…</div>
+      <div v-if="detailStatus === 'loading'" class="panel__loading mono">{{ t('detail.loading') }}</div>
 
       <template v-else-if="openService">
         <header class="panel__head">
@@ -125,7 +127,7 @@ function onPointerUp() {
           </dl>
 
           <section class="block">
-            <h3 class="block__title">Capabilities</h3>
+            <h3 class="block__title">{{ t('detail.capabilities') }}</h3>
             <ul class="capabilities">
               <li v-for="capability in openService.capabilities" :key="capability">
                 {{ capability }}
@@ -134,7 +136,7 @@ function onPointerUp() {
           </section>
 
           <section class="block">
-            <h3 class="block__title">Case studies</h3>
+            <h3 class="block__title">{{ t('detail.cases') }}</h3>
             <ul class="cases">
               <li v-for="study in openService.caseStudies" :key="study.id" class="case">
                 <div class="case__head">
@@ -149,7 +151,7 @@ function onPointerUp() {
         </div>
 
         <footer class="panel__foot">
-          <button class="talk" type="button" @click="dismiss">Talk to this team</button>
+          <button class="talk" type="button" @click="dismiss">{{ t('detail.talk') }}</button>
         </footer>
       </template>
     </article>

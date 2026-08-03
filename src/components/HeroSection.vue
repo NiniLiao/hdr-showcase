@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
 import type { Stat } from '@/types'
 
 defineProps<{ stats: Stat[] }>()
+
+const { t } = useI18n()
 
 function scrollTo(selector: string) {
   document.querySelector(selector)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -33,26 +36,23 @@ function scrollTo(selector: string) {
     </div>
 
     <div class="shell hero__inner">
-      <p class="eyebrow hero__eyebrow">Employee-owned · 200+ locations</p>
+      <p class="eyebrow hero__eyebrow">{{ t('hero.eyebrow') }}</p>
 
       <h1 class="hero__title">
-        Architecture, engineering,<br />
-        environmental and<br />
-        <em>construction services</em>
+        {{ t('hero.titleA') }}<br />
+        {{ t('hero.titleB') }}<br />
+        <em>{{ t('hero.titleEm') }}</em>
       </h1>
 
-      <p class="hero__lead">
-        We design the infrastructure a place runs on — crossings, water systems, hospitals and
-        transmission — and stay with it from feasibility through the last inspection.
-      </p>
+      <p class="hero__lead">{{ t('hero.lead') }}</p>
 
       <div class="hero__actions">
         <button class="btn btn--solid" type="button" @click="scrollTo('#services')">
-          Explore our services
+          {{ t('hero.explore') }}
           <span aria-hidden="true">→</span>
         </button>
         <button class="btn btn--ghost" type="button" @click="scrollTo('#projects')">
-          View projects
+          {{ t('hero.projects') }}
         </button>
       </div>
 

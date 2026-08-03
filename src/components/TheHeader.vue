@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useScrollLock } from '@/composables/useScrollLock'
+import { applyLocale } from '@/i18n'
+import type { Locale } from '@/types'
 
 const menuOpen = ref(false)
 useScrollLock(menuOpen)
 
-const links = [
-  { href: '#services', label: 'Services' },
-  { href: '#projects', label: 'Projects' },
-  { href: '#about', label: 'About' },
-]
+const { t, locale } = useI18n()
+
+const links = computed(() => [
+  { href: '#services', label: t('nav.services') },
+  { href: '#projects', label: t('nav.projects') },
+  { href: '#about', label: t('nav.about') },
+])
+
+const nextLocale = computed<Locale>(() => (locale.value === 'zh-TW' ? 'en' : 'zh-TW'))
 
 function go(href: string) {
   menuOpen.value = false
@@ -31,7 +38,7 @@ watch(menuOpen, (open) => {
       <a class="wordmark" href="#top" @click.prevent="go('#top')">
         HDR
         <span class="wordmark__rule" aria-hidden="true"></span>
-        <span class="wordmark__since mono">est. 1917</span>
+        <span class="wordmark__since mono">{{ t('nav.since') }}</span>
       </a>
 
       <nav class="nav" aria-label="Primary">
@@ -40,7 +47,17 @@ watch(menuOpen, (open) => {
         </a>
       </nav>
 
-      <a class="cta" href="#contact" @click.prevent="go('#contact')">Contact</a>
+      <button
+        class="lang"
+        type="button"
+        :title="t('lang.switchTo')"
+        :aria-label="t('lang.switchTo')"
+        @click="applyLocale(nextLocale)"
+      >
+        <span class="mono">{{ nextLocale === 'zh-TW' ? '中文' : 'EN' }}</span>
+      </button>
+
+      <a class="cta" href="#contact" @click.prevent="go('#contact')">{{ t('nav.contact') }}</a>
 
       <button
         class="burger"
@@ -49,7 +66,7 @@ watch(menuOpen, (open) => {
         aria-controls="mobile-menu"
         @click="menuOpen = !menuOpen"
       >
-        <span class="visually-hidden">{{ menuOpen ? 'Close menu' : 'Open menu' }}</span>
+        <span class="visually-hidden">{{ menuOpen ? t('nav.close') : t('nav.open') }}</span>
         <span class="burger__bar" :class="{ 'burger__bar--top': true, 'is-open': menuOpen }"></span>
         <span class="burger__bar" :class="{ 'burger__bar--bottom': true, 'is-open': menuOpen }"></span>
       </button>
@@ -58,7 +75,7 @@ watch(menuOpen, (open) => {
     <Transition name="menu">
       <div v-if="menuOpen" id="mobile-menu" class="menu">
         <a
-          v-for="(link, index) in [...links, { href: '#contact', label: 'Contact' }]"
+          v-for="(link, index) in [...links, { href: '#contact', label: t('nav.contact') }]"
           :key="link.href"
           class="menu__link"
           :href="link.href"
@@ -68,6 +85,11 @@ watch(menuOpen, (open) => {
           <span class="mono menu__index">{{ String(index + 1).padStart(2, '0') }}</span>
           {{ link.label }}
         </a>
+
+        <button class="menu__lang" type="button" @click="applyLocale(nextLocale)">
+          <span class="mono menu__index">{{ t('lang.label') }}</span>
+          {{ nextLocale === 'zh-TW' ? '中文' : 'English' }}
+        </button>
       </div>
     </Transition>
   </header>
@@ -151,6 +173,21 @@ watch(menuOpen, (open) => {
   transform: scaleX(1);
 }
 
+.lang {
+  display: none;
+  align-items: center;
+  font-size: var(--step-eyebrow);
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.lang:hover {
+  color: var(--ink);
+}
+
 .cta {
   display: none;
   font-size: var(--step-caption);
@@ -218,6 +255,16 @@ watch(menuOpen, (open) => {
   color: var(--ink-faint);
 }
 
+.menu__lang {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  width: 100%;
+  padding: 0.9rem 0;
+  font-size: 1.125rem;
+  color: var(--ink-muted);
+}
+
 .menu-enter-active,
 .menu-leave-active {
   transition:
@@ -233,6 +280,7 @@ watch(menuOpen, (open) => {
 
 @media (min-width: 48rem) {
   .nav,
+  .lang,
   .cta {
     display: flex;
   }

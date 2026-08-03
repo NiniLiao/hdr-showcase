@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 const year = new Date().getFullYear()
 </script>
 
@@ -7,13 +10,10 @@ const year = new Date().getFullYear()
     <div class="shell footer__inner">
       <div>
         <p class="footer__mark">HDR</p>
-        <p class="footer__copy">
-          Employee-owned since 1917. Architecture, engineering, environmental and construction
-          services in more than 200 cities.
-        </p>
+        <p class="footer__copy">{{ t('footer.copy') }}</p>
       </div>
 
-      <p class="footer__legal mono">© {{ year }} HDR, Inc. · Demonstration build</p>
+      <p class="footer__legal mono">{{ t('footer.legal', { year }) }}</p>
     </div>
   </footer>
 </template>
