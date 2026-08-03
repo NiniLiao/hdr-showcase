@@ -4,7 +4,7 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "functions": {
-    "api/**/*.ts": { "runtime": "@vercel/node@3.2.24", "memory": 1024, "maxDuration": 10 }
+    "api/**/*.ts": { "memory": 1024, "maxDuration": 10 }
   },
   "headers": [
     {
