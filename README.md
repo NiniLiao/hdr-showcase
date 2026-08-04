@@ -109,7 +109,7 @@ src/
 npm test
 ```
 
-162 個測試，10 個檔案：
+165 個測試，10 個檔案：
 
 | 檔案 | 覆蓋範圍 |
 | ---- | -------- |
@@ -156,7 +156,9 @@ npm test
 
 輪播是一條真正的橫向軌道：所有張並排在 `.hero__track` 上，`transform: translateX(calc(-N% + Xpx))` 同時吃「第幾張」與「拖曳位移」。拖曳時整條軌道跟著游標移動，旁邊那張會從邊緣露出來，放開才以 520ms 吸附定位——這是「翻頁感」的來源。
 
-無縫循環用頭尾 clone：軌道實際渲染 `[最後一張, ...全部, 第一張]`，落到 clone 上時在 `transitionend` 把 transition 關掉、跳回它的雙胞胎，再於下一個 frame 開回來，肉眼看不到接縫。子元素的 transition 會冒泡到軌道上，所以 `onTransitionEnd` 會檢查 `event.target` 與 `propertyName === 'transform'` 才動作。
+無縫循環用頭尾 clone：軌道實際渲染 `[最後一張, ...全部, 第一張]`，落到 clone 上時把 transition 關掉、跳回它的雙胞胎，再於下一個 frame 開回來，肉眼看不到接縫。
+
+回捲有三個觸發點，不能只靠 `transitionend`——拖曳會把 transition 設成 `none`，正在跑的動畫被取消，那個事件就永遠不會來。實機上連續向右滑三次就會讓軌道走出 strip 範圍、只剩背景色。所以除了 `transitionend`，還有 700ms 的 timer 後援，以及新手勢開始（`pointerdown`）與下一次 `step()` 前的自我修正。子元素的 transition 會冒泡到軌道上，所以 `onTransitionEnd` 會檢查 `event.target` 與 `propertyName === 'transform'` 才動作。
 
 滑鼠與觸控走同一套 Pointer Events：前 6px 判定方向，水平才接管、垂直讓給頁面捲動；放開時位移超過視窗寬度 12%（下限 48px）換頁、否則彈回原位；拖曳結束若剛好落在專案連結上，那次 click 會被吞掉。`touch-action: pan-y` 確保手機上下捲動不被攔截。
 
@@ -169,6 +171,12 @@ npm test
 卡片等高的做法是讓 grid item 預設的 stretch 一路傳下去：`.grid > li` 設 `display: flex`、`.card` 設 `height: 100%` 與 flex 直排，再讓 `.card__foot` 吃 `margin-top: auto`。所以無論描述文字幾行，底部那條「N case studies →」都會對齊在同一水平線上。
 
 卡片本身仍然標示所服務的產業（Health、Civic、Urban 等），那是資訊而非篩選控制項——資料層的 `markets` 欄位保留著，未來若要恢復第二條軸，只需要在 store 加回一個 `activeMarket` 即可。
+
+## 一個容易重演的版面陷阱
+
+`.row__track`（篩選 chip 那排）是 flex item 且內含五顆 chip。flex item 的 `min-width` 預設是 `auto`，也就是由內容決定，所以那排會把整個頁面撐得比視窗寬——結果不只篩選列跑掉，**下面每一區都跟著左右偏移**，看起來像好幾個地方同時壞掉。
+
+修法是 `min-width: 0`，讓它能縮小並在自己的框內橫向捲動。表單欄位也補了同樣的保護。以後在 flex 或 grid 裡放會溢出的內容，記得先想這一行。
 
 ## RWD 策略
 
