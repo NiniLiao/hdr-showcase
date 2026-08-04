@@ -175,7 +175,7 @@ function reset() {
 
 .form {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.9rem;
 }
 
@@ -281,6 +281,12 @@ textarea:focus {
   border: 1px solid var(--rule-strong);
   border-radius: var(--radius);
   font-size: var(--step-caption);
+}
+
+@media (min-width: 30rem) {
+  .form {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (min-width: 64rem) {
