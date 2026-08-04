@@ -58,6 +58,11 @@ img {
   border-radius: 2px;
 }
 
+section[id],
+footer[id] {
+  scroll-margin-block-start: calc(var(--header-h) + 1rem);
+}
+
 .shell {
   width: 100%;
   max-width: var(--shell);
