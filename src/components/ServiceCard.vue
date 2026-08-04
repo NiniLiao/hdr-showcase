@@ -28,6 +28,12 @@ const style = themeVars(props.service.slug)
       <span class="card__tagline">{{ service.tagline }}</span>
     </span>
 
+    <span class="card__markets">
+      <span v-for="market in service.markets" :key="market" class="card__market">
+        {{ t(`markets.${market}`) }}
+      </span>
+    </span>
+
     <span class="card__foot">
       <span class="card__cases mono">{{ t('directory.cases', { count: service.caseCount }) }}</span>
       <span class="card__arrow" aria-hidden="true">→</span>
@@ -38,9 +44,11 @@ const style = themeVars(props.service.slug)
 <style scoped>
 .card {
   position: relative;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
   width: 100%;
+  height: 100%;
   text-align: start;
   padding: 1.1rem 1.15rem;
   background: var(--paper);
@@ -102,10 +110,25 @@ const style = themeVars(props.service.slug)
   line-height: 1.55;
 }
 
+.card__markets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.card__market {
+  font-size: var(--step-eyebrow);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+  background: var(--paper-sunk);
+  color: var(--ink-muted);
+}
+
 .card__foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: auto;
   padding-top: 0.75rem;
   border-top: 1px solid var(--rule);
 }
