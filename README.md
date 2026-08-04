@@ -109,7 +109,7 @@ src/
 npm test
 ```
 
-165 個測試，10 個檔案：
+168 個測試，10 個檔案：
 
 | 檔案 | 覆蓋範圍 |
 | ---- | -------- |
@@ -122,7 +122,7 @@ npm test
 | `src/components/ServiceDirectory.spec.ts` | 載入骨架、卡片數量、篩選收斂與清除、空狀態、錯誤重試、卡片點擊開啟詳情，並在手機寬度下重跑一次 |
 | `src/components/HeroCarousel.spec.ts` | 軌道位移量、頭尾 clone 的無縫循環、拖曳跟手與吸附、方向判定、拖曳後不誤觸連結、自動輪播與暫停、鍵盤操作、照片 srcset 與線稿退路、說明面板從專案連結開合、`aria-expanded` 狀態、拖曳後不誤開，並在手機寬度下重跑一次 |
 | `src/components/ServiceDetail.spec.ts` | 桌機 modal 與手機 bottom sheet 兩種型態，含下拉手勢的四種結果 |
-| `src/components/ContactPortal.spec.ts` | 表單提交全流程：payload、送出中、成功回執、錯誤、重送、重置、單欄版面，並在手機寬度下重跑成功／失敗／再送三條路徑 |
+| `src/components/ContactPortal.spec.ts` | 表單提交全流程：payload、送出中、成功回執、錯誤、重送、重置、單欄版面、送出後把回執捲回視野並交出焦點，並在手機寬度下重跑成功／失敗／再送三條路徑 |
 
 `src/test/helpers.ts` 提供 fixture 與 fetch stub。stub 會記錄每一次請求的 URL 與 request body，所以快取、`?lang=`、表單送出的內容都是直接對 call list 斷言，而不是靠 mock 呼叫次數猜。
 
@@ -171,6 +171,10 @@ npm test
 卡片等高的做法是讓 grid item 預設的 stretch 一路傳下去：`.grid > li` 設 `display: flex`、`.card` 設 `height: 100%` 與 flex 直排，再讓 `.card__foot` 吃 `margin-top: auto`。所以無論描述文字幾行，底部那條「N case studies →」都會對齊在同一水平線上。
 
 卡片本身仍然標示所服務的產業（Health、Civic、Urban 等），那是資訊而非篩選控制項——資料層的 `markets` 欄位保留著，未來若要恢復第二條軸，只需要在 store 加回一個 `activeMarket` 即可。
+
+## 送出後的捲動位置
+
+回執比它取代的表單矮很多，頁面總高度驟減，捲動位置就落到回執下方——手機上使用者會看到頁尾，得自己往上滑才找得到「已送出」。所以成功之後會把回執 `scrollIntoView({ block: 'center' })` 拉回視野，同時 `focus()` 它（`tabindex="-1"` + `role="status"`），讓螢幕閱讀器也會播報。`prefers-reduced-motion` 下改用瞬間捲動。
 
 ## 一個容易重演的版面陷阱
 
