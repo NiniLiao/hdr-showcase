@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onScopeDispose, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ProjectPlate from './ProjectPlate.vue'
 import { useMediaQuery } from '@/composables/useMediaQuery'
@@ -65,6 +65,10 @@ function stop() {
   timer = null
 }
 
+onScopeDispose(() => {
+  if (rewindTimer !== null) clearTimeout(rewindTimer)
+})
+
 function start() {
   stop()
   if (!running.value) return
@@ -84,25 +88,11 @@ watch(
 
 onScopeDispose(stop)
 
-function step(delta: number) {
-  if (props.highlights.length < 2) return
-  position.value += delta
-  start()
-}
-
-function goToReal(target: number) {
-  position.value = target + firstReal.value
-  start()
-}
-
 /**
- * Silently rewinds from a clone to the slide it duplicates. Child elements have
- * their own transitions that bubble up here, so only the track's own transform
- * counts.
+ * Snaps off a clone onto the slide it duplicates, with the transition off.
+ * Safe to call at any time: it does nothing while the track is on a real slide.
  */
-async function onTransitionEnd(event: TransitionEvent) {
-  if (event.target !== trackEl.value) return
-  if (event.propertyName && event.propertyName !== 'transform') return
+function rewindIfOnClone() {
   if (!hasClones.value) return
 
   const beyondEnd = position.value > lastReal.value
@@ -111,8 +101,43 @@ async function onTransitionEnd(event: TransitionEvent) {
 
   snapping.value = true
   position.value = beyondEnd ? firstReal.value : lastReal.value
-  await nextTick()
   requestAnimationFrame(() => (snapping.value = false))
+}
+
+let rewindTimer: ReturnType<typeof setTimeout> | null = null
+
+/**
+ * transitionend is the usual trigger, but a drag that starts mid-animation
+ * cancels the transition and the event never fires. Without a fallback the
+ * track walks off the end of the strip and shows nothing but background.
+ */
+function scheduleRewind() {
+  if (rewindTimer !== null) clearTimeout(rewindTimer)
+  rewindTimer = setTimeout(rewindIfOnClone, 700)
+}
+
+function step(delta: number) {
+  if (props.highlights.length < 2) return
+  rewindIfOnClone()
+  position.value += delta
+  scheduleRewind()
+  start()
+}
+
+function goToReal(target: number) {
+  if (rewindTimer !== null) clearTimeout(rewindTimer)
+  position.value = target + firstReal.value
+  start()
+}
+
+/**
+ * Child elements have their own transitions that bubble up here, so only the
+ * track's own transform counts.
+ */
+function onTransitionEnd(event: TransitionEvent) {
+  if (event.target !== trackEl.value) return
+  if (event.propertyName && event.propertyName !== 'transform') return
+  rewindIfOnClone()
 }
 
 function pin() {
@@ -179,6 +204,7 @@ let captured = false
 
 function onPointerDown(event: PointerEvent) {
   if (event.button > 0 || props.highlights.length < 2) return
+  rewindIfOnClone()
   startX = event.clientX
   startY = event.clientY
   axis = 'undecided'
