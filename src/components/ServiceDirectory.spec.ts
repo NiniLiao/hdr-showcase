@@ -139,7 +139,16 @@ describe('ServiceDirectory', () => {
     const { wrapper } = await mountLoaded('zh-TW')
 
     expect(wrapper.text()).toContain('服務目錄')
+    expect(wrapper.text()).toContain('四大領域')
     expect(chips(wrapper)[1]!.text()).toBe('交通')
+  })
+
+  it('describes a single filter axis, matching what the UI offers', async () => {
+    const { wrapper } = await mountLoaded()
+
+    expect(wrapper.find('.directory__title').text()).toBe('Four disciplines, one delivery team')
+    expect(wrapper.text()).not.toContain('Two axes')
+    expect(wrapper.text()).not.toContain('who you build it for')
   })
 
   describe('on a phone-sized viewport', () => {
