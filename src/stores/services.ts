@@ -2,7 +2,7 @@ import { computed, ref } from 'vue'
 import { defineStore } from 'pinia'
 import { api } from '@/api/client'
 import { DEFAULT_LOCALE } from '@/types'
-import type { DisciplineId, Locale, Service, ServiceSummary, Stat } from '@/types'
+import type { DisciplineId, Highlight, Locale, Service, ServiceSummary, Stat } from '@/types'
 
 export type FilterId = DisciplineId | 'all'
 
@@ -20,6 +20,7 @@ export const useServicesStore = defineStore('services', () => {
   const locale = ref<Locale>(DEFAULT_LOCALE)
   const summaries = ref<ServiceSummary[]>([])
   const stats = ref<Stat[]>([])
+  const highlights = ref<Highlight[]>([])
   const detailCache = ref<Record<string, Service>>({})
 
   const activeFilter = ref<FilterId>('all')
@@ -55,9 +56,14 @@ export const useServicesStore = defineStore('services', () => {
     error.value = null
 
     try {
-      const [serviceResponse, statResponse] = await Promise.all([api.services(next), api.stats(next)])
+      const [serviceResponse, statResponse, highlightResponse] = await Promise.all([
+        api.services(next),
+        api.stats(next),
+        api.highlights(next),
+      ])
       summaries.value = serviceResponse.services
       stats.value = statResponse.stats
+      highlights.value = highlightResponse.highlights
       listStatus.value = 'ready'
     } catch (cause) {
       error.value = cause instanceof Error ? cause.message : 'Something went wrong.'
@@ -127,6 +133,7 @@ export const useServicesStore = defineStore('services', () => {
     locale,
     summaries,
     stats,
+    highlights,
     activeFilter,
     openSlug,
     listStatus,
