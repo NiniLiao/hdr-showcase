@@ -1,24 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useI18n } from 'vue-i18n'
 import ServiceCard from './ServiceCard.vue'
 import ServiceFilter from './ServiceFilter.vue'
-import { useServicesStore, type FilterId } from '@/stores/services'
+import { useServicesStore } from '@/stores/services'
 
 const { t } = useI18n()
 const store = useServicesStore()
-const { summaries, visible, activeFilter, listStatus, error } = storeToRefs(store)
-
-const counts = computed<Record<string, number>>(() => {
-  const map: Record<string, number> = { all: summaries.value.length }
-  for (const service of summaries.value) map[service.slug] = 1
-  return map
-})
-
-function onFilter(filter: FilterId) {
-  store.setFilter(filter)
-}
+const { visible, activeFilter, listStatus, error } = storeToRefs(store)
 </script>
 
 <template>
@@ -30,7 +19,7 @@ function onFilter(filter: FilterId) {
         <p class="directory__lead">{{ t('directory.lead') }}</p>
       </header>
 
-      <ServiceFilter :active="activeFilter" :counts="counts" @change="onFilter" />
+      <ServiceFilter :active-service="activeFilter" @service="store.setFilter" />
 
       <p v-if="listStatus === 'error'" class="notice notice--error" role="alert">
         {{ error }}
@@ -48,6 +37,10 @@ function onFilter(filter: FilterId) {
           <ServiceCard :service="service" @open="store.open" @prefetch="store.prefetch" />
         </li>
       </TransitionGroup>
+
+      <p v-if="listStatus === 'ready' && visible.length === 0" class="empty">
+        {{ t('directory.empty') }}
+      </p>
     </div>
   </section>
 </template>
@@ -83,6 +76,11 @@ function onFilter(filter: FilterId) {
   display: grid;
   gap: 0.75rem;
   margin-top: 1.5rem;
+  align-items: stretch;
+}
+
+.grid > li {
+  display: flex;
 }
 
 .skeleton {
@@ -97,6 +95,16 @@ function onFilter(filter: FilterId) {
   to {
     background-position: -200% 0;
   }
+}
+
+.empty {
+  margin-top: 1.5rem;
+  padding: 2rem 1rem;
+  text-align: center;
+  border: 1px dashed var(--rule-strong);
+  border-radius: var(--radius-lg);
+  font-size: var(--step-caption);
+  color: var(--ink-muted);
 }
 
 .notice {
