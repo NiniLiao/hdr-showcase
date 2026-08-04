@@ -2,60 +2,62 @@
 import { useI18n } from 'vue-i18n'
 import { FILTER_IDS, type FilterId } from '@/stores/services'
 
-defineProps<{ active: FilterId; counts: Record<string, number> }>()
+defineProps<{ activeService: FilterId }>()
+
+const emit = defineEmits<{ service: [FilterId] }>()
 
 const { t } = useI18n()
-const emit = defineEmits<{ change: [FilterId] }>()
 </script>
 
 <template>
-  <div class="filter" role="group" :aria-label="t('directory.filterLabel')">
-    <ul class="filter__track">
-      <li v-for="id in FILTER_IDS" :key="id">
-        <button
-          class="chip"
-          type="button"
-          :class="{ 'is-active': active === id }"
-          :aria-pressed="active === id"
-          @click="emit('change', id)"
-        >
-          {{ t(`directory.filters.${id}`) }}
-          <span v-if="counts[id]" class="chip__count mono">{{ counts[id] }}</span>
-        </button>
-      </li>
-    </ul>
+  <div class="filters">
+    <div class="row" role="group" :aria-label="t('directory.serviceAxis')">
+      <ul class="row__track">
+        <li v-for="id in FILTER_IDS" :key="id">
+          <button
+            class="chip"
+            type="button"
+            :class="{ 'is-active': activeService === id }"
+            :aria-pressed="activeService === id"
+            @click="emit('service', id)"
+          >
+            {{ t(`directory.filters.${id}`) }}
+          </button>
+        </li>
+      </ul>
+    </div>
   </div>
 </template>
 
 <style scoped>
-.filter {
-  position: relative;
-  margin-inline: calc(var(--gutter) * -1);
-  padding-inline: var(--gutter);
+.filters {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.row__track {
+  display: flex;
+  gap: 0.5rem;
   overflow-x: auto;
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-}
-
-.filter::-webkit-scrollbar {
-  display: none;
-}
-
-.filter__track {
-  display: flex;
-  gap: 0.5rem;
-  width: max-content;
   padding-block: 0.25rem;
 }
 
+.row__track::-webkit-scrollbar {
+  display: none;
+}
+
 .chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
   scroll-snap-align: start;
   white-space: nowrap;
-  padding: 0.45rem 0.95rem;
+  padding: 0.4rem 0.9rem;
   border: 1px solid var(--rule);
   border-radius: 999px;
   font-size: var(--step-caption);
@@ -75,10 +77,5 @@ const emit = defineEmits<{ change: [FilterId] }>()
   background: var(--navy-800);
   border-color: var(--navy-800);
   color: #fff;
-}
-
-.chip__count {
-  font-size: var(--step-eyebrow);
-  opacity: 0.7;
 }
 </style>
