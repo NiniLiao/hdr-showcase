@@ -32,6 +32,10 @@ function installDialog() {
   }
 }
 
+function installScrollIntoView() {
+  Element.prototype.scrollIntoView ??= () => undefined
+}
+
 function installPointerCapture() {
   Element.prototype.setPointerCapture ??= () => undefined
   Element.prototype.releasePointerCapture ??= () => undefined
@@ -53,6 +57,7 @@ function installMatchMedia() {
 }
 
 installDialog()
+installScrollIntoView()
 installPointerCapture()
 installMatchMedia()
 
