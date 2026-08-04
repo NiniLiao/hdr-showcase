@@ -1,5 +1,8 @@
 export type DisciplineId = 'transportation' | 'water' | 'buildings' | 'energy'
 
+export const MARKET_IDS = ['health', 'civic', 'science', 'industrial', 'urban'] as const
+export type MarketId = (typeof MARKET_IDS)[number]
+
 export const LOCALES = ['en', 'zh-TW'] as const
 export type Locale = (typeof LOCALES)[number]
 export const DEFAULT_LOCALE: Locale = 'en'
@@ -51,9 +54,27 @@ export interface Service {
   tagline: string
   description: string
   capabilities: string[]
+  markets: MarketId[]
   specs: Spec[]
   caseCount: number
   caseStudies: CaseStudy[]
+}
+
+/** A hero slide: one project, framed as a story rather than a spec. */
+export interface Highlight {
+  id: string
+  slug: DisciplineId
+  market: MarketId
+  location: string
+  headline: string
+  blurb: string
+  linkLabel: string
+  /** Basename under /hero. Omit to fall back to the drawn plate. */
+  image?: string
+  imageAlt?: string
+  /** Sourced background on the discipline the photo stands for. */
+  caption?: string
+  sourceUrl?: string
 }
 
 export interface Stat {
@@ -86,9 +107,24 @@ export interface SourceService {
   tagline: Localized
   description: Localized
   capabilities: Localized<string[]>
+  markets: MarketId[]
   specs: SourceSpec[]
   caseCount: number
   caseStudies: SourceCaseStudy[]
+}
+
+export interface SourceHighlight {
+  id: string
+  slug: DisciplineId
+  market: MarketId
+  location: Localized
+  headline: Localized
+  blurb: Localized
+  linkLabel: Localized
+  image?: string
+  imageAlt?: Localized
+  caption?: Localized
+  sourceUrl?: string
 }
 
 export interface SourceStat {
