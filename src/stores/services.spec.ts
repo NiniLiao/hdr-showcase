@@ -17,8 +17,9 @@ describe('services store', () => {
     await store.load('en')
 
     expect(store.listStatus).toBe('ready')
-    expect(store.summaries).toHaveLength(1)
-    expect(store.stats[0]!.value).toBe('1,400+')
+    expect(store.summaries).toHaveLength(2)
+    expect(store.stats[0]!.value).toBe('No. 6')
+    expect(store.highlights).toHaveLength(3)
     expect(store.error).toBeNull()
   })
 
@@ -48,14 +49,14 @@ describe('services store', () => {
     await store.load('en')
     const before = calls.length
 
-    store.setFilter('water')
+    store.setFilter('energy')
     expect(store.visible).toHaveLength(0)
 
     store.setFilter('transportation')
     expect(store.visible).toHaveLength(1)
 
     store.setFilter('all')
-    expect(store.visible).toHaveLength(1)
+    expect(store.visible).toHaveLength(2)
     expect(calls.length).toBe(before)
   })
 
@@ -111,7 +112,7 @@ describe('services store', () => {
     expect(store.flagships).toHaveLength(0)
 
     await store.loadAllDetails()
-    expect(store.flagships).toHaveLength(1)
+    expect(store.flagships).toHaveLength(2)
     expect(store.flagships[0]!.study.name).toBe('Kosciuszko Bridge')
   })
 
