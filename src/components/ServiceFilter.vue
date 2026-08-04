@@ -45,6 +45,11 @@ const { t } = useI18n()
  * Without min-width the flex item is sized by its content, so five chips push
  * the whole page wider than the viewport and every section below looks shifted.
  */
+/**
+ * Scroll snapping used to pull the first chip past the container padding, which
+ * clipped it against the screen edge. The row now simply scrolls inside the
+ * page gutter, so the first chip lines up with the cards below it.
+ */
 .row__track {
   display: flex;
   gap: 0.5rem;
@@ -52,9 +57,6 @@ const { t } = useI18n()
   flex: 1;
   overflow-x: auto;
   overscroll-behavior-x: contain;
-  margin-inline: calc(var(--gutter) * -1);
-  padding-inline: var(--gutter);
-  scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding-block: 0.25rem;
@@ -65,7 +67,6 @@ const { t } = useI18n()
 }
 
 .chip {
-  scroll-snap-align: start;
   white-space: nowrap;
   padding: 0.4rem 0.9rem;
   border: 1px solid var(--rule);
