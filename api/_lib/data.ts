@@ -1,13 +1,99 @@
-import type { Localized, SourceService, SourceStat } from './types.js'
+import type { Localized, SourceHighlight, SourceService, SourceStat } from './types.js'
 
 const l = (en: string, zh: string): Localized => ({ en, 'zh-TW': zh })
 const lx = (en: string[], zh: string[]): Localized<string[]> => ({ en, 'zh-TW': zh })
 
 export const stats: SourceStat[] = [
-  { label: l('Bridges delivered', '完成橋梁'), value: '1,400+', note: l('Since 1917', '自 1917 年起') },
-  { label: l('Repeat clients', '回流客戶'), value: '98%', note: l('Rolling five years', '近五年滾動統計') },
-  { label: l('Annual revenue', '年度營收'), value: '$4.2B', note: l('FY 2025', '2025 會計年度') },
-  { label: l('Employee owners', '員工股東'), value: '11,000', note: l('200+ locations', '200 個以上據點') },
+  {
+    label: l('Engineering News-Record', 'Engineering News-Record'),
+    value: 'No. 6',
+    note: l('Global design firms', '全球設計公司排名'),
+  },
+  {
+    label: l('Employee owners', '員工股東'),
+    value: '15K+',
+    note: l('100% employee owned', '100% 員工持股'),
+  },
+  {
+    label: l('Offices worldwide', '全球據點'),
+    value: '200+',
+    note: l('Since 1917', '自 1917 年起'),
+  },
+]
+
+export const highlights: SourceHighlight[] = [
+  {
+    id: 'kosciuszko',
+    slug: 'transportation',
+    market: 'urban',
+    location: l('New York, USA', '美國紐約'),
+    headline: l(
+      'A 1939 truss replaced without closing the corridor',
+      '汰換 1939 年的舊桁架，全程不封閉廊道',
+    ),
+    blurb: l(
+      'Twin cable-stayed spans, phased across six years of live traffic.',
+      '雙座斜張橋，在六年通車狀態下分階段施工。',
+    ),
+    linkLabel: l('Kosciuszko Bridge', 'Kosciuszko 大橋'),
+    image: 'architecture',
+    imageAlt: l(
+      'Glass and steel office towers seen from street level against a pale sky.',
+      '自街道仰望的玻璃帷幕辦公大樓群，襯著淺色天空。',
+    ),
+    caption: l(
+      'Architecture at HDR pairs iterative design with predictive analytics, and runs from building engineering and interior design through landscape and brand environments — the same studio process whether the brief is a start-up office or a 500-bed acute care facility.',
+      'HDR 的建築業務把反覆推敲的設計與預測分析結合，範圍從建築工程、室內設計一路延伸到景觀與品牌環境——不論委託案是新創辦公室還是 500 床的急重症醫療設施，走的都是同一套工作室流程。',
+    ),
+    sourceUrl: 'https://www.hdrinc.com/services/architecture',
+  },
+  {
+    id: 'pure-water',
+    slug: 'water',
+    market: 'civic',
+    location: l('San Diego, USA', '美國聖地牙哥'),
+    headline: l(
+      'Half a city’s water, recovered from what it already used',
+      '半座城市的用水，從自己用過的水裡回收',
+    ),
+    blurb: l(
+      'A demonstration plant built public trust years before the permits landed.',
+      '示範廠在核准下來的數年前，就先建立了民眾信任。',
+    ),
+    linkLabel: l('Pure Water programme', 'Pure Water 計畫'),
+    image: 'engineering',
+    imageAlt: l(
+      'Two engineers leaning over a marked-up site plan on a workbench.',
+      '兩位工程師俯身檢視工作桌上標註過的基地平面圖。',
+    ),
+    caption: l(
+      'Engineering spans roads through to smart buildings: structural work for complex forms, civil design and permitting, and value engineering studies that weigh every alternative for cost, constructability, schedule and environmental impact before the design freezes.',
+      '工程業務橫跨道路到智慧建築：複雜結構的專業、土木設計與許可申請，以及在設計凍結前逐一評估每個替代方案在成本、可施工性、工期與環境衝擊上表現的價值工程研究。',
+    ),
+    sourceUrl: 'https://www.hdrinc.com/services/engineering',
+  },
+  {
+    id: 'mercy',
+    slug: 'buildings',
+    market: 'health',
+    location: l('Missouri, USA', '美國密蘇里州'),
+    headline: l('A hospital that keeps operating when the grid stops', '電網停擺時仍能開刀的醫院'),
+    blurb: l(
+      '420 beds with an envelope rated for 96 hours of critical care off-grid.',
+      '420 床，外殼系統可支撐 96 小時離網重症照護。',
+    ),
+    linkLabel: l('Mercy medical centre', 'Mercy 醫學中心'),
+    image: 'construction',
+    imageAlt: l(
+      'A site team standing on a poured deck beside reinforcement laid for the next pour.',
+      '工地團隊站在已澆置的樓板上，旁邊是為下一次澆置鋪設的鋼筋。',
+    ),
+    caption: l(
+      'Construction services put management, inspection, contract administration and environmental monitoring staff on site as the owner’s eyes and ears, so what gets built matches the approved contract documents rather than drifting from them.',
+      '施工服務把施工管理、監造、契約行政與環境監測人員派駐現場，擔任業主的眼睛與耳朵，確保蓋出來的東西與核准的契約文件一致，而不是一路偏離。',
+    ),
+    sourceUrl: 'https://www.hdrinc.com/services/project-delivery/construction-services',
+  },
 ]
 
 export const services: SourceService[] = [
@@ -32,6 +118,7 @@ export const services: SourceService[] = [
       ],
       ['斜張橋與節塊工法設計', '廊道與交流道規劃', '耐震風險評估', '施工工程與監造'],
     ),
+    markets: ['urban', 'civic', 'industrial'],
     specs: [
       { label: l('Max span', '最大跨距'), value: l('1.2 km', '1.2 公里') },
       { label: l('Seismic', '耐震分區'), value: l('Zone 4', '第 4 區') },
@@ -95,6 +182,7 @@ export const services: SourceService[] = [
       ],
       ['高級處理與直接再生飲用水', '流域與洪泛平原模擬', '棲地與河川復育', 'NEPA 與環評許可策略'],
     ),
+    markets: ['civic', 'health', 'industrial'],
     specs: [
       { label: l('Capacity', '處理量'), value: l('380 MGD', '每日 380 萬加侖') },
       { label: l('Reuse', '再生等級'), value: l('Direct potable', '直接飲用') },
@@ -149,6 +237,7 @@ export const services: SourceService[] = [
       ],
       ['急重症與手術空間規劃', 'BSL-3 與研究型實驗室', '淨零與深度節能改造', '韌性與營運持續規劃'],
     ),
+    markets: ['health', 'science', 'civic'],
     specs: [
       { label: l('EUI target', '能耗目標'), value: l('28 kBtu', '28 kBtu') },
       { label: l('Certification', '認證'), value: l('LEED Platinum', 'LEED 白金級') },
@@ -200,6 +289,7 @@ export const services: SourceService[] = [
       ],
       ['輸電選線與選址', '併聯與系統研究', '陸域與離岸風電', '公用事業級儲能整合'],
     ),
+    markets: ['industrial', 'urban', 'science'],
     specs: [
       { label: l('Voltage', '電壓等級'), value: l('765 kV', '765 kV') },
       { label: l('Storage', '儲能容量'), value: l('1.4 GWh', '1.4 GWh') },
