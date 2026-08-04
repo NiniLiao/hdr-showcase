@@ -2,7 +2,14 @@ import { fileURLToPath, URL } from 'node:url'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { defineConfig, type Plugin } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import { getService, getStats, listServices, submitContact } from './api/_lib/handlers'
+import {
+  getHighlights,
+  getService,
+  getStats,
+  listServices,
+  submitContact,
+} from './api/_lib/handlers'
+import { isApiEndpoint } from './api/_lib/routing'
 import { resolveLocale } from './api/_lib/types'
 
 function readJson(req: IncomingMessage): Promise<unknown> {
@@ -35,12 +42,17 @@ function devApi(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const url = new URL(req.url ?? '/', 'http://localhost')
-        if (!url.pathname.startsWith('/api/')) return next()
+        if (!isApiEndpoint(url.pathname)) return next()
 
         const locale = resolveLocale(
           url.searchParams.get('lang') ?? undefined,
           req.headers['accept-language'],
         )
+
+        if (url.pathname === '/api/highlights' && req.method === 'GET') {
+          const { status, body } = getHighlights(locale)
+          return send(res, status, body)
+        }
 
         if (url.pathname === '/api/stats' && req.method === 'GET') {
           const { status, body } = getStats(locale)
