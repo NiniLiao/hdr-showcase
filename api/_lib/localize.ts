@@ -1,5 +1,7 @@
 import type {
   CaseStudy,
+  Highlight,
+  SourceHighlight,
   Locale,
   Localized,
   Service,
@@ -35,12 +37,29 @@ export function localizeService(service: SourceService, locale: Locale): Service
     slug: service.slug,
     code: service.code,
     caseCount: service.caseCount,
+    markets: service.markets,
     name: pick(service.name, locale),
     tagline: pick(service.tagline, locale),
     description: pick(service.description, locale),
     capabilities: pick(service.capabilities, locale),
     specs: service.specs.map((spec) => localizeSpec(spec, locale)),
     caseStudies: service.caseStudies.map((study) => localizeCase(study, locale)),
+  }
+}
+
+export function localizeHighlight(highlight: SourceHighlight, locale: Locale): Highlight {
+  return {
+    id: highlight.id,
+    slug: highlight.slug,
+    market: highlight.market,
+    location: pick(highlight.location, locale),
+    headline: pick(highlight.headline, locale),
+    blurb: pick(highlight.blurb, locale),
+    linkLabel: pick(highlight.linkLabel, locale),
+    ...(highlight.image ? { image: highlight.image } : {}),
+    ...(highlight.imageAlt ? { imageAlt: pick(highlight.imageAlt, locale) } : {}),
+    ...(highlight.caption ? { caption: pick(highlight.caption, locale) } : {}),
+    ...(highlight.sourceUrl ? { sourceUrl: highlight.sourceUrl } : {}),
   }
 }
 
