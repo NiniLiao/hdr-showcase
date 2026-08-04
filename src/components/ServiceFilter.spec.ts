@@ -48,6 +48,15 @@ describe('ServiceFilter', () => {
     expect(wrapper.findAll('button[disabled]')).toHaveLength(0)
   })
 
+  it('scrolls horizontally inside the page gutter rather than bleeding past it', () => {
+    const wrapper = mountWith(ServiceFilter, { props: { activeService: 'all' } })
+    const track = wrapper.find('.row__track')
+
+    expect(track.exists()).toBe(true)
+    expect(track.findAll('.chip')).toHaveLength(5)
+    expect(track.find('.chip').text()).toBe('All')
+  })
+
   it('translates the chips and the group label', () => {
     const wrapper = mountWith(ServiceFilter, { props: { activeService: 'all' } }, 'zh-TW')
 
