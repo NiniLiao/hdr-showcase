@@ -1,7 +1,16 @@
-import { findService, services, stats } from './data.js'
-import { localizeService, localizeStat, pick } from './localize.js'
+import { findService, highlights, services, stats } from './data.js'
+import { localizeHighlight, localizeService, localizeStat, pick } from './localize.js'
 import { DEFAULT_LOCALE, isLocale } from './types.js'
-import type { ContactPayload, ContactReceipt, DisciplineId, Locale, Localized, Service, Stat } from './types.js'
+import type {
+  ContactPayload,
+  ContactReceipt,
+  DisciplineId,
+  Highlight,
+  Locale,
+  Localized,
+  Service,
+  Stat,
+} from './types.js'
 
 export interface HandlerResult<T> {
   status: number
@@ -65,6 +74,13 @@ export function getService(
     return { status: 404, body: { error: pick(ERRORS.notFound, locale).replace('%s', slug) } }
   }
   return { status: 200, body: localizeService(source, locale) }
+}
+
+export function getHighlights(locale: Locale = DEFAULT_LOCALE): HandlerResult<{ highlights: Highlight[] }> {
+  return {
+    status: 200,
+    body: { highlights: highlights.map((highlight) => localizeHighlight(highlight, locale)) },
+  }
 }
 
 export function getStats(locale: Locale = DEFAULT_LOCALE): HandlerResult<{ stats: Stat[] }> {
