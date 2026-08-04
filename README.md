@@ -109,7 +109,7 @@ src/
 npm test
 ```
 
-168 個測試，10 個檔案：
+178 個測試，11 個檔案：
 
 | 檔案 | 覆蓋範圍 |
 | ---- | -------- |
@@ -118,6 +118,7 @@ npm test
 | `api/_lib/handlers.spec.ts` | 列表過濾、summary 保留 market 標籤、輪播資料指向存在的服務、404 訊息、表單驗證，兩種語系都驗 |
 | `src/stores/services.spec.ts` | 載入狀態機、篩選不重抓、詳情快取只打一次 API、切語系清快取、prefetch 失敗要安靜 |
 | `src/components/ServiceCard.spec.ts` | 渲染、`aria-label`、`open` / `prefetch` 事件 payload |
+| `src/components/TheHeader.spec.ts` | 漢堡選單開合、四個項目各自捲到正確區塊、捲動必須等 scroll lock 釋放之後才執行、桌機導覽與語言切換 |
 | `src/components/ServiceFilter.spec.ts` | 單一軸的 group label、只有一個 `aria-pressed`、事件 payload、不再有產業 chip |
 | `src/components/ServiceDirectory.spec.ts` | 載入骨架、卡片數量、篩選收斂與清除、空狀態、錯誤重試、卡片點擊開啟詳情，並在手機寬度下重跑一次 |
 | `src/components/HeroCarousel.spec.ts` | 軌道位移量、頭尾 clone 的無縫循環、拖曳跟手與吸附、方向判定、拖曳後不誤觸連結、自動輪播與暫停、鍵盤操作、照片 srcset 與線稿退路、說明面板從專案連結開合、`aria-expanded` 狀態、拖曳後不誤開，並在手機寬度下重跑一次 |
@@ -175,6 +176,12 @@ npm test
 ## 送出後的捲動位置
 
 回執比它取代的表單矮很多，頁面總高度驟減，捲動位置就落到回執下方——手機上使用者會看到頁尾，得自己往上滑才找得到「已送出」。所以成功之後會把回執 `scrollIntoView({ block: 'center' })` 拉回視野，同時 `focus()` 它（`tabindex="-1"` + `role="status"`），讓螢幕閱讀器也會播報。`prefers-reduced-motion` 下改用瞬間捲動。
+
+## 選單導覽與 scroll lock 的先後順序
+
+手機選單開啟時 `useScrollLock` 會把 `body` 設成 `position: fixed` 並記住當時的捲動位置；關閉時再 `window.scrollTo()` 還原。如果在關閉選單的同一個 tick 就呼叫 `scrollIntoView()`，還原的那次捲動會蓋掉導覽，使用者會被帶回開啟選單前的位置——看起來就像「每個項目都跳到同一區」。所以 `go()` 會先 `await nextTick()` 等鎖釋放，再執行捲動。
+
+另外所有帶 `id` 的區塊都有 `scroll-margin-block-start`，避免捲到定位後被吸附式標題列蓋住。
 
 ## 一個容易重演的版面陷阱
 
