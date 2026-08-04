@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { getService, getStats, listServices, submitContact } from './handlers.js'
+import { getHighlights, getService, getStats, listServices, submitContact } from './handlers.js'
 import type { ContactReceipt, Service } from './types.js'
 
 describe('listServices', () => {
@@ -25,6 +25,19 @@ describe('listServices', () => {
     expect(first).not.toHaveProperty('caseStudies')
     expect(first).not.toHaveProperty('description')
     expect(first).not.toHaveProperty('capabilities')
+  })
+
+  it('keeps market tags on the summary so the second filter axis works', () => {
+    const [first] = listServices().body.services
+
+    expect(first!.markets).toContain('urban')
+    expect(first!.markets.length).toBeGreaterThan(1)
+  })
+
+  it('covers every market across the four services', () => {
+    const covered = new Set(listServices().body.services.flatMap((service) => service.markets))
+
+    expect([...covered].sort()).toEqual(['civic', 'health', 'industrial', 'science', 'urban'])
   })
 
   it('filters on name, tagline, code and capabilities', () => {
@@ -68,12 +81,77 @@ describe('getService', () => {
 })
 
 describe('getStats', () => {
-  it('keeps figures stable across locales and translates the labels', () => {
+  it('returns the three credentials in order', () => {
+    const stats = getStats().body.stats
+
+    expect(stats).toHaveLength(3)
+    expect(stats.map((stat) => stat.value)).toEqual(['No. 6', '15K+', '200+'])
+  })
+
+  it('keeps figures stable across locales and translates the notes', () => {
     const en = getStats().body.stats
     const zh = getStats('zh-TW').body.stats
 
     expect(en.map((stat) => stat.value)).toEqual(zh.map((stat) => stat.value))
-    expect(zh[0]!.label).toBe('完成橋梁')
+    expect(zh[1]!.label).toBe('員工股東')
+  })
+})
+
+describe('getHighlights', () => {
+  it('returns one hero slide per featured discipline', () => {
+    const { status, body } = getHighlights()
+
+    expect(status).toBe(200)
+    expect(body.highlights).toHaveLength(3)
+    expect(body.highlights.map((highlight) => highlight.slug)).toEqual([
+      'transportation',
+      'water',
+      'buildings',
+    ])
+  })
+
+  it('points every slide at a service that actually exists', () => {
+    const slugs = new Set(listServices().body.services.map((service) => service.slug))
+
+    for (const highlight of getHighlights().body.highlights) {
+      expect(slugs.has(highlight.slug)).toBe(true)
+    }
+  })
+
+  it('carries a photo basename and a localised alt for every slide', () => {
+    for (const highlight of getHighlights().body.highlights) {
+      expect(highlight.image).toBeTruthy()
+      expect(highlight.imageAlt).toBeTruthy()
+    }
+
+    const zh = getHighlights('zh-TW').body.highlights
+    expect(zh[0]!.image).toBe('architecture')
+    expect(zh[0]!.imageAlt).toContain('玻璃帷幕辦公大樓')
+  })
+
+  it('carries a sourced caption and a link back to hdrinc.com', () => {
+    const [en] = getHighlights().body.highlights
+    const [zh] = getHighlights('zh-TW').body.highlights
+
+    expect(en!.caption).toContain('predictive analytics')
+    expect(zh!.caption).toContain('預測分析')
+    expect(en!.sourceUrl).toBe('https://www.hdrinc.com/services/architecture')
+    expect(zh!.sourceUrl).toBe(en!.sourceUrl)
+  })
+
+  it('points every caption at a real HDR services page', () => {
+    for (const highlight of getHighlights().body.highlights) {
+      expect(highlight.caption!.length).toBeGreaterThan(80)
+      expect(highlight.sourceUrl).toMatch(/^https:\/\/www\.hdrinc\.com\/services\//)
+    }
+  })
+
+  it('localises the narrative copy', () => {
+    const [first] = getHighlights('zh-TW').body.highlights
+
+    expect(first!.location).toBe('美國紐約')
+    expect(first!.headline).toContain('桁架')
+    expect(first!.linkLabel).toContain('Kosciuszko')
   })
 })
 
