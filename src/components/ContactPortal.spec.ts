@@ -193,6 +193,48 @@ describe('ContactPortal', () => {
     })
   })
 
+  describe('after a successful send', () => {
+    it('brings the receipt back into view', async () => {
+      const scroll = vi.spyOn(Element.prototype, 'scrollIntoView')
+      stubFetch()
+      const wrapper = mountWith(ContactPortal)
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(scroll).toHaveBeenCalledTimes(1)
+      expect(scroll.mock.calls[0]![0]).toMatchObject({ block: 'center', behavior: 'smooth' })
+    })
+
+    it('hands the receipt the focus so it is announced', async () => {
+      stubFetch()
+      const wrapper = mountWith(ContactPortal, { attachTo: document.body })
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      const receipt = wrapper.find('.receipt')
+      expect(receipt.attributes('role')).toBe('status')
+      expect(receipt.attributes('tabindex')).toBe('-1')
+      expect(document.activeElement).toBe(receipt.element)
+      wrapper.unmount()
+    })
+
+    it('does not scroll when the send failed', async () => {
+      const scroll = vi.spyOn(Element.prototype, 'scrollIntoView')
+      stubFetch({ contactError: 'Enter your name.' })
+      const wrapper = mountWith(ContactPortal)
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(scroll).not.toHaveBeenCalled()
+    })
+  })
+
   it('translates its labels and actions', () => {
     const wrapper = mountWith(ContactPortal, {}, 'zh-TW')
 
