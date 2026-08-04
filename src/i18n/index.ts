@@ -37,8 +37,8 @@ const en = {
   },
   directory: {
     eyebrow: 'Service directory',
-    title: 'Filter by what you build, or who you build it for',
-    lead: 'Two axes: the discipline doing the work, and the market it serves. Open a service for specifications and the projects behind it.',
+    title: 'Four disciplines, one delivery team',
+    lead: 'Filter by discipline, then open a service for its specifications and the projects behind it.',
     retry: 'Try again',
     serviceAxis: 'Filter by discipline',
     empty: 'No service covers that combination yet.',
@@ -133,8 +133,8 @@ const zhTW: typeof en = {
   },
   directory: {
     eyebrow: '服務目錄',
-    title: '從你要蓋什麼，或你為誰而蓋，開始找起',
-    lead: '兩個維度：執行工作的專業領域，以及服務的產業。點開任一服務可查看規格與背後的實績。',
+    title: '四大領域，同一支交付團隊',
+    lead: '依專業領域篩選，點開任一服務可查看規格與背後的實績。',
     retry: '重新載入',
     serviceAxis: '依專業領域篩選',
     empty: '目前沒有服務同時符合這個組合。',
