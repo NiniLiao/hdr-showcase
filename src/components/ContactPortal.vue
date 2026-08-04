@@ -182,6 +182,7 @@ function reset() {
 .field {
   display: grid;
   gap: 0.35rem;
+  min-width: 0;
 }
 
 .field--wide,
@@ -201,6 +202,8 @@ input,
 select,
 textarea {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   padding: 0.65rem 0.75rem;
   background: var(--paper-sunk);
   border: 1px solid var(--rule);
