@@ -61,8 +61,10 @@ src/
   utils/discipline.ts      四個領域的色彩對應
   components/
     TheHeader.vue          導覽 + 手機選單
-    HeroSection.vue        英雄區與橋樑立面線稿
-    ServiceFilter.vue      橫向 scroll-snap 篩選列
+    HeroCarousel.vue       作品輪播（自動播放、可暫停、鍵盤操作）
+    ProjectPlate.vue       四種領域各自的線稿底圖
+    CredentialBand.vue     信任數據帶
+    ServiceFilter.vue      依專業領域篩選的 chip 列
     ServiceCard.vue        服務卡
     ServiceDirectory.vue   服務目錄（TransitionGroup FLIP）
     FeaturedProjects.vue   代表案例列表
@@ -77,13 +79,16 @@ src/
 
 `api/_lib/handlers.ts` 是純函式，同時被兩邊使用：正式環境由 `api/**` 的 Vercel function 呼叫，本機 `npm run dev` 則由 `vite.config.ts` 裡的 `devApi()` middleware 呼叫。兩邊行為一致，不需要 mock server。
 
+前端會從 `api/_lib` 匯入共用型別與常數，所以開發時 Vite 也會向同一個伺服器索取 `/api/_lib/types.ts` 這類原始碼模組。`isApiEndpoint()` 負責區分：帶副檔名的路徑交還給 Vite，其餘才當作端點處理。
+
 ## API
 
 | Method | Path                   | 說明                                       |
 | ------ | ---------------------- | ------------------------------------------ |
 | GET    | `/api/services`        | 服務摘要列表，可用 `?q=` 做關鍵字過濾      |
 | GET    | `/api/services/:slug`  | 單一服務完整資料，含 specs 與 case studies |
-| GET    | `/api/stats`           | 首頁 title block 的統計數字                |
+| GET    | `/api/stats`           | 信任帶的三個數字（ENR 排名、員工數、據點數）|
+| GET    | `/api/highlights`      | 首頁輪播的三則專案敘事                     |
 | POST   | `/api/contact`         | 送出聯絡表單，回傳 reference / office / respondBy |
 
 所有 GET endpoint 都接受 `?lang=en|zh-TW`；沒帶參數時改看 `Accept-Language`，再沒有就回退英文。回應一律加上 `Vary: Accept-Language`，避免 CDN 把某個語系的結果快取給另一個語系。
@@ -104,17 +109,20 @@ src/
 npm test
 ```
 
-69 個測試，7 個檔案：
+162 個測試，10 個檔案：
 
 | 檔案 | 覆蓋範圍 |
 | ---- | -------- |
+| `api/_lib/routing.spec.ts` | 開發伺服器要能分辨 `/api/services`（端點）與 `/api/_lib/types.ts`（原始碼模組） |
 | `api/_lib/types.spec.ts` | `resolveLocale` 的優先序：query > Accept-Language > 預設，含 `zh-Hant-TW` 這類區域標籤的收斂 |
-| `api/_lib/handlers.spec.ts` | 列表過濾、summary 不外洩重欄位、404 訊息、表單驗證與辦公室路由，兩種語系都驗 |
+| `api/_lib/handlers.spec.ts` | 列表過濾、summary 保留 market 標籤、輪播資料指向存在的服務、404 訊息、表單驗證，兩種語系都驗 |
 | `src/stores/services.spec.ts` | 載入狀態機、篩選不重抓、詳情快取只打一次 API、切語系清快取、prefetch 失敗要安靜 |
 | `src/components/ServiceCard.spec.ts` | 渲染、`aria-label`、`open` / `prefetch` 事件 payload |
-| `src/components/ServiceFilter.spec.ts` | chip 數量、`aria-pressed` 只有一個、`change` 事件、中英切換 |
+| `src/components/ServiceFilter.spec.ts` | 單一軸的 group label、只有一個 `aria-pressed`、事件 payload、不再有產業 chip |
+| `src/components/ServiceDirectory.spec.ts` | 載入骨架、卡片數量、篩選收斂與清除、空狀態、錯誤重試、卡片點擊開啟詳情，並在手機寬度下重跑一次 |
+| `src/components/HeroCarousel.spec.ts` | 軌道位移量、頭尾 clone 的無縫循環、拖曳跟手與吸附、方向判定、拖曳後不誤觸連結、自動輪播與暫停、鍵盤操作、照片 srcset 與線稿退路、說明面板從專案連結開合、`aria-expanded` 狀態、拖曳後不誤開，並在手機寬度下重跑一次 |
 | `src/components/ServiceDetail.spec.ts` | 桌機 modal 與手機 bottom sheet 兩種型態，含下拉手勢的四種結果 |
-| `src/components/ContactPortal.spec.ts` | 表單提交全流程：payload、送出中、成功回執、錯誤、重送、重置 |
+| `src/components/ContactPortal.spec.ts` | 表單提交全流程：payload、送出中、成功回執、錯誤、重送、重置、單欄版面，並在手機寬度下重跑成功／失敗／再送三條路徑 |
 
 `src/test/helpers.ts` 提供 fixture 與 fetch stub。stub 會記錄每一次請求的 URL 與 request body，所以快取、`?lang=`、表單送出的內容都是直接對 call list 斷言，而不是靠 mock 呼叫次數猜。
 
@@ -129,6 +137,38 @@ npm test
 3. **`performance.now` 要用 `mockImplementation` 而不是 `mockReturnValueOnce`** — 中間會有其他程式碼消耗掉 mock 值，用計數式的假回傳會讓速度計算悄悄落回真實時鐘，測試就會因為錯的理由而通過。
 
 四種結果都各有一個案例：跟著手指移動、位移不足彈回、超過門檻關閉、短距離但快速的甩動也關閉。
+
+## 首頁結構
+
+首頁刻意讓作品走在文字前面：hero 是三則專案的輪播，每則只有一句標題、一句說明和一個很短的連結詞，點下去直接開對應服務的詳情。輪播底圖優先使用照片：資料裡的 `image` 欄位給的是 `public/hero/` 底下的檔名前綴，元件會組出 `<picture>` 搭配 800/1600/2400 三種寬度的 WebP 與 JPEG，第一張帶 `fetchpriority="high"`、其餘 `loading="lazy"`。若某一則沒有 `image`，就退回該領域的 inline SVG 線稿（`ProjectPlate.vue`），兩條路徑都有測試覆蓋。
+
+點擊每張投影片的專案名稱（例如 `Kosciuszko Bridge →`）會展開說明面板：先是照片的 alt 描述，接著是該領域的背景說明，最後是「查看這項服務」按鈕與 hdrinc.com 對應服務頁的外部連結。連結本身帶 `aria-expanded` / `aria-controls`，箭頭會從 `→` 變成 `↓`；展開時暫停輪播（正在閱讀就不該被換頁），換頁時自動收起。面板會蓋住連結所在的位置，所以有三種收起方式：右上角的關閉鈕、Escape 鍵、以及點擊面板以外的任何地方。點擊面板內部（含來源連結）不會誤關。
+
+開啟面板的那一次點擊會繼續往 document 冒泡，而瀏覽器在每個 listener 之間都會清空微任務佇列，所以用 `nextTick` 之類的延遲**無法可靠地閃過它**（在 jsdom 裡看起來會過，真實瀏覽器則是面板一閃即逝）。正確做法是記住那個 event 物件本身，document listener 收到同一個 event 時跳過一次。
+
+另外，切換投影片時若焦點還停在即將變成 `inert` 的投影片內，Chrome 會警告 `Blocked aria-hidden on an element because its descendant retained focus`，所以換頁時會主動 blur 那個元素。拖曳結束若落在這個連結上，那次 click 會被吞掉，面板不會誤開。
+
+**pointer capture 的時機**：`setPointerCapture` 只在確認為水平拖曳之後才呼叫，放開時歸還。若在 `pointerdown` 就claim，Chrome 會把後續的 click 重新導向到 capture 的元素上，導致投影片裡所有按鈕都點不動——而且開著 DevTools 的觸控模擬時症狀不同，很容易誤判成別的問題。
+
+說明文字是依照片檔名對應到 HDR 官網的服務頁面後改寫的，中英文各一份，資料放在 `api/_lib/data.ts` 的 `caption` 與 `sourceUrl` 欄位，跟其他內容一樣由後端依語系回傳。
+
+換照片的方式：把新圖放進 `public/hero/`，命名成 `<名稱>-800.jpg`、`-1600.jpg`、`-2400.jpg`（以及對應的 `.webp`），再把 `api/_lib/data.ts` 裡該則的 `image`、`imageAlt`、`caption`、`sourceUrl` 改掉即可。
+
+輪播是一條真正的橫向軌道：所有張並排在 `.hero__track` 上，`transform: translateX(calc(-N% + Xpx))` 同時吃「第幾張」與「拖曳位移」。拖曳時整條軌道跟著游標移動，旁邊那張會從邊緣露出來，放開才以 520ms 吸附定位——這是「翻頁感」的來源。
+
+無縫循環用頭尾 clone：軌道實際渲染 `[最後一張, ...全部, 第一張]`，落到 clone 上時在 `transitionend` 把 transition 關掉、跳回它的雙胞胎，再於下一個 frame 開回來，肉眼看不到接縫。子元素的 transition 會冒泡到軌道上，所以 `onTransitionEnd` 會檢查 `event.target` 與 `propertyName === 'transform'` 才動作。
+
+滑鼠與觸控走同一套 Pointer Events：前 6px 判定方向，水平才接管、垂直讓給頁面捲動；放開時位移超過視窗寬度 12%（下限 48px）換頁、否則彈回原位；拖曳結束若剛好落在專案連結上，那次 click 會被吞掉。`touch-action: pan-y` 確保手機上下捲動不被攔截。
+
+輪播的無障礙處理：`prefers-reduced-motion` 下不自動播放、滑鼠移入或聚焦時暫停、使用者一旦點過任何控制項就永久停止輪播（不再是背景動態）、左右方向鍵可切換、有獨立的播放／暫停按鈕、切換內容的容器是 `aria-live="polite"`。
+
+## 服務目錄的篩選
+
+目錄只有一條篩選軸：依專業領域（Transportation / Water / Buildings / Energy）收斂卡片，沒有結果時出現虛線的空狀態。
+
+卡片等高的做法是讓 grid item 預設的 stretch 一路傳下去：`.grid > li` 設 `display: flex`、`.card` 設 `height: 100%` 與 flex 直排，再讓 `.card__foot` 吃 `margin-top: auto`。所以無論描述文字幾行，底部那條「N case studies →」都會對齊在同一水平線上。
+
+卡片本身仍然標示所服務的產業（Health、Civic、Urban 等），那是資訊而非篩選控制項——資料層的 `markets` 欄位保留著，未來若要恢復第二條軸，只需要在 store 加回一個 `activeMarket` 即可。
 
 ## RWD 策略
 
@@ -149,6 +189,32 @@ npm test
 - 底部固定元素都帶 `env(safe-area-inset-bottom)`。
 - 所有互動元素保留可見的 `:focus-visible` 樣式。
 - 語言切換在桌機是導覽列上的 `EN / 中文` 按鈕，手機則收進漢堡選單最後一列。
+
+## 聯絡表單目前不會寄出任何東西
+
+`POST /api/contact` 會驗證欄位、依領域決定回覆的辦公室、產生一組 reference 並回傳，但**沒有接任何郵件服務**——資料驗證完就被丟掉了。這是刻意的：展示用的專案不該把陌生人的聯絡資訊送到任何地方。
+
+要讓它真的送出，在 `api/contact.ts` 的 `submitContact` 回傳 201 之後補上寄信，例如 Resend：
+
+```ts
+if (status === 201) {
+  await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      from: 'HDR demo <noreply@your-domain.com>',
+      to: 'you@your-domain.com',
+      subject: `[${body.reference}] ${payload.name}`,
+      text: payload.message,
+    }),
+  })
+}
+```
+
+`RESEND_API_KEY` 放在 Vercel 的 Settings → Environment Variables，不要進 repo。另外記得加上速率限制——公開的表單端點一定會被機器人打。
 
 ## 換成真實資料
 
