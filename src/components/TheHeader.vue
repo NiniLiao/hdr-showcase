@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useScrollLock } from '@/composables/useScrollLock'
 import { applyLocale } from '@/i18n'
@@ -18,9 +18,17 @@ const links = computed(() => [
 
 const nextLocale = computed<Locale>(() => (locale.value === 'zh-TW' ? 'en' : 'zh-TW'))
 
-function go(href: string) {
+/**
+ * Closing the menu releases the scroll lock, which restores the position the
+ * page had when the menu opened. Scrolling in the same tick therefore lands
+ * back where the reader started instead of at the section they asked for, so
+ * the navigation waits for the lock to let go first.
+ */
+async function go(href: string) {
+  const target = document.querySelector(href)
   menuOpen.value = false
-  document.querySelector(href)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  await nextTick()
+  target?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 watch(menuOpen, (open) => {
