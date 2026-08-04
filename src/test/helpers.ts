@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 import { vi } from 'vitest'
 import type { Component, Plugin } from 'vue'
 import { messages } from '@/i18n'
-import type { Locale, Service, ServiceSummary, Stat } from '@/types'
+import type { Highlight, Locale, Service, ServiceSummary, Stat } from '@/types'
 
 /** A throwaway i18n instance carrying the real message catalogue. */
 export function makeI18n(locale: Locale = 'en') {
@@ -36,6 +36,7 @@ export const summaryFixture: ServiceSummary = {
   name: 'Transportation and bridge engineering',
   tagline: 'Long-span crossings',
   specs: [{ label: 'Max span', value: '1.2 km' }],
+  markets: ['urban', 'civic', 'industrial'],
   caseCount: 42,
 }
 
@@ -57,7 +58,59 @@ export const serviceFixture: Service = {
 }
 
 export const statsFixture: Stat[] = [
-  { label: 'Bridges delivered', value: '1,400+', note: 'Since 1917' },
+  { label: 'Engineering News-Record', value: 'No. 6', note: 'Global design firms' },
+]
+
+export const waterSummaryFixture: ServiceSummary = {
+  slug: 'water',
+  code: 'WER',
+  name: 'Water and environmental resources',
+  tagline: 'Treatment plants',
+  specs: [{ label: 'Capacity', value: '380 MGD' }],
+  markets: ['civic', 'health'],
+  caseCount: 36,
+}
+
+export const highlightsFixture: Highlight[] = [
+  {
+    id: 'kosciuszko',
+    slug: 'transportation',
+    market: 'urban',
+    location: 'New York, USA',
+    headline: 'A 1939 truss replaced without closing the corridor',
+    blurb: 'Twin cable-stayed spans.',
+    linkLabel: 'Kosciuszko Bridge',
+    image: 'architecture',
+    imageAlt: 'Glass and steel office towers seen from street level against a pale sky.',
+    caption: 'Architecture at HDR pairs iterative design with predictive analytics.',
+    sourceUrl: 'https://www.hdrinc.com/services/architecture',
+  },
+  {
+    id: 'pure-water',
+    slug: 'water',
+    market: 'civic',
+    location: 'San Diego, USA',
+    headline: 'Half a city’s water, recovered',
+    blurb: 'A demonstration plant built trust.',
+    linkLabel: 'Pure Water programme',
+    image: 'engineering',
+    imageAlt: 'Two engineers leaning over a marked-up site plan on a workbench.',
+    caption: 'Engineering spans roads through to smart buildings.',
+    sourceUrl: 'https://www.hdrinc.com/services/engineering',
+  },
+  {
+    id: 'mercy',
+    slug: 'buildings',
+    market: 'health',
+    location: 'Missouri, USA',
+    headline: 'A hospital that keeps operating',
+    blurb: '420 beds, 96 hours off-grid.',
+    linkLabel: 'Mercy medical centre',
+    image: 'construction',
+    imageAlt: 'A site team standing on a poured deck beside reinforcement laid for the next pour.',
+    caption: 'Construction services put staff on site as the owner’s eyes and ears.',
+    sourceUrl: 'https://www.hdrinc.com/services/project-delivery/construction-services',
+  },
 ]
 
 export const receiptFixture = {
@@ -89,8 +142,9 @@ export function stubFetch(overrides: StubOptions = {}) {
     if (url.startsWith('/api/services?')) {
       if (overrides.failList) return reply({ error: 'Upstream is down.' }, false, 503)
       const locale = new URL(url, 'http://localhost').searchParams.get('lang')
-      return reply({ locale, services: [summaryFixture] })
+      return reply({ locale, services: [summaryFixture, waterSummaryFixture] })
     }
+    if (url.startsWith('/api/highlights')) return reply({ highlights: highlightsFixture })
     if (url.startsWith('/api/services/')) return reply(serviceFixture)
     if (url.startsWith('/api/stats')) return reply({ stats: statsFixture })
 
