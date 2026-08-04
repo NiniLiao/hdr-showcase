@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises } from '@vue/test-utils'
 import ContactPortal from './ContactPortal.vue'
 import { mountWith, receiptFixture, stubFetch } from '@/test/helpers'
+import { setNarrowViewport } from '@/test/setup'
 
 const enquiry = {
   name: 'Nini Chen',
@@ -21,6 +22,7 @@ async function fillIn(wrapper: ReturnType<typeof mountWith>) {
 describe('ContactPortal', () => {
   beforeEach(() => {
     vi.unstubAllGlobals()
+    setNarrowViewport(false)
   })
 
   it('offers a general option plus every discipline', () => {
@@ -138,6 +140,57 @@ describe('ContactPortal', () => {
     expect(wrapper.find('form').exists()).toBe(true)
     expect((wrapper.find('#name').element as HTMLInputElement).value).toBe('')
     expect((wrapper.find('#discipline').element as HTMLSelectElement).value).toBe('general')
+  })
+
+  it('stacks to a single column before the first breakpoint', () => {
+    const wrapper = mountWith(ContactPortal)
+
+    expect(wrapper.find('.form').exists()).toBe(true)
+    expect(wrapper.findAll('.field')).toHaveLength(5)
+    expect(wrapper.findAll('.field--wide')).toHaveLength(1)
+  })
+
+  describe('on a phone-sized viewport', () => {
+    beforeEach(() => setNarrowViewport(true))
+
+    it('replaces the form with the same receipt', async () => {
+      stubFetch()
+      const wrapper = mountWith(ContactPortal)
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.find('form').exists()).toBe(false)
+      expect(wrapper.find('.receipt').exists()).toBe(true)
+      expect(wrapper.find('.receipt__reference').text()).toBe(receiptFixture.reference)
+      expect(wrapper.find('.receipt__badge').text()).toBe('Received')
+    })
+
+    it('still lets the user start a second enquiry', async () => {
+      stubFetch()
+      const wrapper = mountWith(ContactPortal)
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+      await wrapper.find('.ghost').trigger('click')
+
+      expect(wrapper.find('form').exists()).toBe(true)
+      expect((wrapper.find('#name').element as HTMLInputElement).value).toBe('')
+    })
+
+    it('keeps what was typed when the server rejects it', async () => {
+      stubFetch({ contactError: 'Enter a valid email address.' })
+      const wrapper = mountWith(ContactPortal)
+
+      await fillIn(wrapper)
+      await wrapper.find('form').trigger('submit')
+      await flushPromises()
+
+      expect(wrapper.find('[role="alert"]').text()).toBe('Enter a valid email address.')
+      expect((wrapper.find('#message').element as HTMLTextAreaElement).value).toBe(enquiry.message)
+    })
   })
 
   it('translates its labels and actions', () => {
