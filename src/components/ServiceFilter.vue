@@ -38,12 +38,22 @@ const { t } = useI18n()
 .row {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
+/**
+ * Without min-width the flex item is sized by its content, so five chips push
+ * the whole page wider than the viewport and every section below looks shifted.
+ */
 .row__track {
   display: flex;
   gap: 0.5rem;
+  min-width: 0;
+  flex: 1;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
+  margin-inline: calc(var(--gutter) * -1);
+  padding-inline: var(--gutter);
   scroll-snap-type: x proximity;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
