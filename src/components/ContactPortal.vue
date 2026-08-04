@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useMediaQuery } from '@/composables/useMediaQuery'
 import { api } from '@/api/client'
 import { DISCIPLINE_IDS } from '@/stores/services'
 import type { ContactPayload, ContactReceipt, Locale } from '@/types'
@@ -15,6 +16,9 @@ const form = reactive<ContactPayload>({
   message: '',
 })
 
+const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+const receiptEl = ref<HTMLElement | null>(null)
+
 const status = ref<'idle' | 'sending' | 'sent' | 'error'>('idle')
 const errorMessage = ref('')
 const receipt = ref<ContactReceipt | null>(null)
@@ -26,10 +30,28 @@ async function send() {
   try {
     receipt.value = await api.contact({ ...form, locale: locale.value as Locale })
     status.value = 'sent'
+    await revealReceipt()
   } catch (cause) {
     errorMessage.value = cause instanceof Error ? cause.message : 'Something went wrong.'
     status.value = 'error'
   }
+}
+
+/**
+ * The receipt is far shorter than the form it replaces, so the page collapses
+ * underneath the reader and leaves them looking at the footer. Bring the
+ * receipt back into view and hand it the focus so it is also announced.
+ */
+async function revealReceipt() {
+  await nextTick()
+  const element = receiptEl.value
+  if (!element) return
+
+  element.focus({ preventScroll: true })
+  element.scrollIntoView({
+    behavior: reducedMotion.value ? 'auto' : 'smooth',
+    block: 'center',
+  })
 }
 
 function reset() {
@@ -55,7 +77,13 @@ function reset() {
       </div>
 
       <div class="card">
-        <div v-if="status === 'sent' && receipt" class="receipt">
+        <div
+          v-if="status === 'sent' && receipt"
+          ref="receiptEl"
+          class="receipt"
+          role="status"
+          tabindex="-1"
+        >
           <p class="receipt__badge mono">{{ t('contact.received') }}</p>
           <p class="receipt__reference mono">{{ receipt.reference }}</p>
           <p class="receipt__copy">
@@ -254,6 +282,11 @@ textarea:focus {
   display: grid;
   gap: 0.5rem;
   padding-block: 1rem;
+  scroll-margin-block: 5rem;
+}
+
+.receipt:focus {
+  outline: none;
 }
 
 .receipt__badge {
