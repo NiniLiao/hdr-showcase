@@ -292,6 +292,43 @@ describe('HeroCarousel', () => {
       expect(track(wrapper)).toContain('translateX(calc(-100% + 0px))')
     })
 
+    it('never walks off the end of the strip, even if transitionend is missed', async () => {
+      const wrapper = mountCarousel()
+      const slots = wrapper.findAll('.slide').length
+
+      for (let swipe = 0; swipe < 6; swipe += 1) {
+        await drag(wrapper, [{ x: 400 }, { x: 280 }], { pointerType: 'touch' })
+      }
+
+      const offset = Number(/translateX\(calc\((-?\d+)%/.exec(track(wrapper))![1])
+      expect(Math.abs(offset) / 100).toBeLessThanOrEqual(slots - 1)
+      expect(activeSlide(wrapper)).toBeDefined()
+      expect(wrapper.find('.slide__photo').exists()).toBe(true)
+    })
+
+    it('rewinds on a timer when the transition was cancelled by a new drag', async () => {
+      const wrapper = mountCarousel()
+
+      await advance(ROTATION * 3)
+      expect(track(wrapper)).toContain('translateX(calc(-400% + 0px))')
+
+      await advance(1000)
+
+      expect(track(wrapper)).toContain('translateX(calc(-100% + 0px))')
+      expect(activeIndex(wrapper)).toBe(0)
+    })
+
+    it('self-heals when a fresh gesture starts on a clone', async () => {
+      const wrapper = mountCarousel()
+
+      await advance(ROTATION * 3)
+      expect(track(wrapper)).toContain('translateX(calc(-400% + 0px))')
+
+      await drag(wrapper, [{ x: 400 }], { release: false })
+
+      expect(track(wrapper)).toContain('translateX(calc(-100% + 0px))')
+    })
+
     it('disables the transition only for the rewind frame', async () => {
       const wrapper = mountCarousel()
 
